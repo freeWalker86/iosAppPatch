@@ -78,7 +78,7 @@
 		</dict>
 		<dict>
 			<key>hookClassMethodName</key>
-			<string>testBool:int:long:float:double:</string>
+			<string>testBool:intV:longV:floatV:doubleV:</string>
 			<key>hookClassName</key>
 			<string>FWStubObject</string>
 		</dict>

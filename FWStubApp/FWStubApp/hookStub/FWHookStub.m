@@ -12,13 +12,10 @@
 #import "NSObject+FWSwizzle.h"
 #import "FWHookHelper.h"
 #import "FWZip.h"
+#import "FWConst.h"
 
 
 static FWHookStub *shareIntance = nil;
-typedef id (^FWCallBackBlock)(BOOL callOriginal);
-@protocol FWHotPatchEntryProtocol <NSObject>
-- (id)runMethod:(NSString*)method withArgs:(NSArray*)args callBack:(FWCallBackBlock)callBack;
-@end
 
 @interface FWHookStub()
 {
@@ -166,10 +163,6 @@ IMP getHookMethodWithSelReturnType(const char* type){
 }
 
 - (id)runMethod:(NSString*)method withArgs:(NSArray*)args callBack:(FWCallBackBlock)callBack{
-    
-//    Class cls1 = NSClassFromString(@"FWHotPatchEntry");
-//    id<FWHotPatchEntryProtocol> obj1 = [[cls1 alloc] init];
-//    return [obj1 runMethod:method withArgs:args callBack:callBack];
     
     if (_patchObj == nil) {
         Class cls = [_bundle classNamed:@"FWHotPatchEntry"];

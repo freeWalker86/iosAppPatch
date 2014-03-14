@@ -7,12 +7,8 @@
 //
 
 #import <Foundation/Foundation.h>
-
-typedef id (^FWCallBackBlock)(BOOL callOriginal);
-@protocol FWHotPatchEntryProtocol <NSObject>
-- (id)runMethod:(NSString*)methodKey withArgs:(NSArray*)args callBack:(FWCallBackBlock)callBack;
-@end
+#import "FWConst.h"
 
 @interface FWHotPatchEntry : NSObject<FWHotPatchEntryProtocol>
-- (id)runMethod:(NSString*)methodKey withArgs:(NSArray*)args callBack:(FWCallBackBlock)callBack;
+- (id)runMethod:(NSString*)method withArgs:(NSArray*)args callBack:(FWCallBackBlock)callBack;
 @end

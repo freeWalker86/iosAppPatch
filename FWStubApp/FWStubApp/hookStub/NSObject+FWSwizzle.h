@@ -8,7 +8,6 @@
 
 #import <Foundation/Foundation.h>
 
-#define  kFWSwizzlePrefix                   @"FWHook"
 @interface NSObject (FWSwizzle)
 /**
  *  1.Add a new selector with name(kFWSwizzlePrefix+origSel) and use newImp as its implement.

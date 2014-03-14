@@ -9,6 +9,7 @@
 #import "NSObject+FWSwizzle.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
+#import "FWConst.h"
 
 //Swizzle the instance method implementations
 static void swizzleIntanceMethod(Class c, SEL orig, SEL new)

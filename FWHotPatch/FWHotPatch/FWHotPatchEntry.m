@@ -9,9 +9,11 @@
 #import "FWHotPatchEntry.h"
 #import "NSObject+FWIvarAccess.h"
 #import "FWFixedStubObject.h"
+#import <objc/runtime.h>
+#import <objc/message.h>
 
 
-#define LVAssertTrue(expression, format...)   FWAssertTrue(expression, ## format)
+#define FWAssertTrue(expression, format...)   FWAssertTrue(expression, ## format)
 
 void FWAssertTrue(BOOL expr, NSString *error){
     if (!expr) {
@@ -29,21 +31,20 @@ void FWAssertTrue(BOOL expr, NSString *error){
 
 
 #pragma mark - Public  Method
-- (id)runMethod:(NSString*)methodKey withArgs:(NSArray*)args callBack:(FWCallBackBlock)callBack{
-    
-    if (methodKey) {
+- (id)runMethod:(NSString*)method withArgs:(NSArray*)args callBack:(FWCallBackBlock)callBack{
+    if (method) {
         NSLog(@">>>FWHotPatchEntry  args=%@",args);
         NSLog(@">>>FWHotPatchEntry  callBack= %@",callBack);
-        NSLog(@">>>FWHotPatchEntry  methodKey=%@",methodKey);
-        methodKey = [methodKey stringByReplacingOccurrencesOfString:@":" withString:@"_"];
+        NSLog(@">>>FWHotPatchEntry  method=%@",method);
+        method = [method stringByReplacingOccurrencesOfString:@":" withString:@"_"];
         self.args     = args;
         self.callBack = callBack;
-        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:methodKey message:@"Display this message in bundle patch" delegate:nil cancelButtonTitle:@"取消" otherButtonTitles:@"确定", nil];
+        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:method message:@"Display this message in bundle patch" delegate:nil cancelButtonTitle:@"取消" otherButtonTitles:@"确定", nil];
         [alertView show];
-        if ([self respondsToSelector:NSSelectorFromString(methodKey)]) {
-           return [self performSelector:NSSelectorFromString(methodKey) withObject:nil];
+        if ([self respondsToSelector:NSSelectorFromString(method)]) {
+           return [self performSelector:NSSelectorFromString(method) withObject:nil];
         }else{
-            NSLog(@">>>unrecognized selector %@",methodKey);
+            NSLog(@">>>unrecognized selector %@",method);
         }
     }
     return nil;
@@ -93,7 +94,7 @@ void FWAssertTrue(BOOL expr, NSString *error){
     //return @{@"method":NSStringFromSelector(_cmd)};
 }
 
-- (NSArray*)FWStubObject_testBool_int_long_float_double_{
+- (NSArray*)FWStubObject_testBool_intV_longV_floatV_doubleV_{
     NSLog(@">>>%@",NSStringFromSelector(_cmd));
     NSMutableArray *mutArray = [NSMutableArray arrayWithCapacity:0];
     [mutArray addObject:NSStringFromSelector(_cmd)];
@@ -109,17 +110,56 @@ void FWAssertTrue(BOOL expr, NSString *error){
     return [mutArray copy];
 }
 
-#pragma mark - FWStubObject Getter
+#pragma mark - FWStubObject Getter & Call super & call original method by objc_msgSend
 - (id    )FWStubObject_getObject{
     NSLog(@">>>%@",NSStringFromSelector(_cmd));
+    //call original method
+    id tmpSelf = [self.args objectAtIndex:0];
+    NSString *newSeletor = [NSString stringWithFormat:@"%@%@",kFWSwizzlePrefix,@"getObject"];
+    SEL sel =  NSSelectorFromString(newSeletor);
+    id rt = objc_msgSend(tmpSelf,sel);
+    
+    FWAssertTrue([objc_msgSend(tmpSelf,sel) isEqualToString:@"1212"], [NSString stringWithFormat:@"Assert Failed At Function:%s Line: %d",__func__, __LINE__]);
+    
+    //call super method
+    struct objc_super super1;
+    super1.receiver = tmpSelf;
+    super1.super_class = class_getSuperclass([tmpSelf class]);
+    FWAssertTrue([objc_msgSendSuper(&super1, @selector(getObject)) isEqualToString:@"_privateObj"],[NSString stringWithFormat:@"Assert Failed At Function:%s Line: %d",__func__, __LINE__]);
+    
     return NSStringFromSelector(_cmd);
 }
+
 - (NSString*)FWStubObject_getStr{
     NSLog(@">>>%@",NSStringFromSelector(_cmd));
+    //call original method
+    id tmpSelf = [self.args objectAtIndex:0];
+    NSString *newSeletor = [NSString stringWithFormat:@"%@%@",kFWSwizzlePrefix,@"getStr"];
+    SEL sel =  NSSelectorFromString(newSeletor);
+    FWAssertTrue([objc_msgSend(tmpSelf,sel) isEqualToString:@"string"], [NSString stringWithFormat:@"Assert Failed At Function:%s Line: %d",__func__, __LINE__]);
+    
+    //call super method
+    struct objc_super super1;
+    super1.receiver = tmpSelf;
+    super1.super_class = class_getSuperclass([tmpSelf class]);
+    FWAssertTrue([objc_msgSendSuper(&super1, @selector(getStr)) isEqualToString:@"string"],[NSString stringWithFormat:@"Assert Failed At Function:%s Line: %d",__func__, __LINE__]);
+    
     return  NSStringFromSelector(_cmd);
 }
 - (id    )FWStubObject_getInt{
     NSLog(@">>>%@",NSStringFromSelector(_cmd));
+    //call original method
+    id tmpSelf = [self.args objectAtIndex:0];
+    NSString *newSeletor = [NSString stringWithFormat:@"%@%@",kFWSwizzlePrefix,@"getInt"];
+    SEL sel =  NSSelectorFromString(newSeletor);
+    FWAssertTrue((int)objc_msgSend(tmpSelf, sel) ==32767 , [NSString stringWithFormat:@"Assert Failed At Function:%s Line: %d",__func__, __LINE__]);
+    
+    //call super method
+    struct objc_super super1;
+    super1.receiver = tmpSelf;
+    super1.super_class = class_getSuperclass([tmpSelf class]);
+    FWAssertTrue((int)objc_msgSendSuper(&super1, @selector(getInt)) ==32765,[NSString stringWithFormat:@"Assert Failed At Function:%s Line: %d",__func__, __LINE__]);
+    
     return [NSNumber numberWithInt:11];
 }
 - (id   )FWStubObject_getLong{
@@ -140,10 +180,36 @@ void FWAssertTrue(BOOL expr, NSString *error){
 }
 - (id )FWStubObject_getSize{
     NSLog(@">>>%@",NSStringFromSelector(_cmd));
+    
+    //call original method
+    id tmpSelf = [self.args objectAtIndex:0];
+    NSString *newSeletor = [NSString stringWithFormat:@"%@%@",kFWSwizzlePrefix,@"getSize"];
+    SEL sel =  NSSelectorFromString(newSeletor);
+    FWAssertTrue(CGSizeEqualToSize(((CGSize(*)(id, SEL))objc_msgSend)(tmpSelf, sel), CGSizeMake(100.08, 22.89)), [NSString stringWithFormat:@"Assert Failed At Function:%s Line: %d",__func__, __LINE__]);
+    
+    //call super method
+    struct objc_super super1;
+    super1.receiver = tmpSelf;
+    super1.super_class = class_getSuperclass([tmpSelf class]);
+    FWAssertTrue(CGSizeEqualToSize(((CGSize(*)(id, SEL))objc_msgSendSuper)((__bridge id)(&super1), @selector(getSize)), CGSizeMake(100.08, 22.89)),[NSString stringWithFormat:@"Assert Failed At Function:%s Line: %d",__func__, __LINE__]);
+    
     return [NSValue valueWithCGSize: CGSizeMake(90.08, 202.89)];
 }
 - (id )FWStubObject_getRect{
     NSLog(@">>>%@",NSStringFromSelector(_cmd));
+    
+    //call original method
+    id tmpSelf = [self.args objectAtIndex:0];
+    NSString *newSeletor = [NSString stringWithFormat:@"%@%@",kFWSwizzlePrefix,@"getRect"];
+    SEL sel =  NSSelectorFromString(newSeletor);
+    FWAssertTrue(CGRectEqualToRect(((CGRect(*)(id, SEL))objc_msgSend_stret)(tmpSelf, sel), CGRectMake(0.22, 43.7, 55.89, 90)), [NSString stringWithFormat:@"Assert Failed At Function:%s Line: %d",__func__, __LINE__]);
+    
+    //call super method
+    struct objc_super super1;
+    super1.receiver = tmpSelf;
+    super1.super_class = class_getSuperclass([tmpSelf class]);
+    FWAssertTrue(CGRectEqualToRect(((CGRect(*)(id, SEL))objc_msgSendSuper_stret)((__bridge id)(&super1), @selector(getRect)), CGRectMake(0.22, 43.7, 55.89, 90)),[NSString stringWithFormat:@"Assert Failed At Function:%s Line: %d",__func__, __LINE__]);
+    
     return [NSValue valueWithCGRect:CGRectMake(22, 80, 245, 190)];
 }
 
@@ -166,67 +232,67 @@ void FWAssertTrue(BOOL expr, NSString *error){
     
     [obj setIvar:@"_privateChar" withChar:'d'];
     
-    LVAssertTrue([obj getIvarChar:@"_privateChar"]=='d',[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue([obj getIvarChar:@"_privateChar"]=='d',[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     [obj setIvar:@"_privateShort" withShort:32767];
-    LVAssertTrue([obj getIvarShort:@"_privateShort"]==32767,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue([obj getIvarShort:@"_privateShort"]==32767,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     [obj setIvar:@"_privateInt" withInt:32767];
-    LVAssertTrue([obj getIvarInt:@"_privateInt"]==32767,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue([obj getIvarInt:@"_privateInt"]==32767,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     [obj setIvar:@"_privateLong" withLong:2147483647];
-    LVAssertTrue([obj getIvarLong:@"_privateLong"]==2147483647,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue([obj getIvarLong:@"_privateLong"]==2147483647,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     [obj setIvar:@"_privateLongLong" withLongLong:9223372036854775807];
-    LVAssertTrue([obj getIvarLongLong:@"_privateLongLong"]==9223372036854775807,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue([obj getIvarLongLong:@"_privateLongLong"]==9223372036854775807,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     [obj setIvar:@"_privateFloat" withFloat:-20];
-    LVAssertTrue([obj getIvarFloat:@"_privateFloat"]==-20,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue([obj getIvarFloat:@"_privateFloat"]==-20,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     [obj setIvar:@"_privateDouble" withDouble:-20];
-    LVAssertTrue([obj getIvarDouble:@"_privateDouble"]==-20,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue([obj getIvarDouble:@"_privateDouble"]==-20,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     [obj setIvar:@"_privateUnsignedChar" withUnsignedChar:'d'];
-    LVAssertTrue([obj getIvarUnsignedChar:@"_privateUnsignedChar"]=='d',[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue([obj getIvarUnsignedChar:@"_privateUnsignedChar"]=='d',[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     [obj setIvar:@"_privateUnsignedShort" withUnsignedShort:65535];
-    LVAssertTrue([obj getIvarUnsignedShort:@"_privateUnsignedShort"]==65535,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue([obj getIvarUnsignedShort:@"_privateUnsignedShort"]==65535,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     [obj setIvar:@"_privateUnsignedInt" withUnsignedInt:65535];
-    LVAssertTrue([obj getIvarUnsignedInt:@"_privateUnsignedInt"]==65535,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue([obj getIvarUnsignedInt:@"_privateUnsignedInt"]==65535,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     [obj setIvar:@"_privateUnsignedLong" withUnsignedLong:4294967295];
-    LVAssertTrue([obj getIvarUnsignedLong:@"_privateUnsignedLong"]==4294967295,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue([obj getIvarUnsignedLong:@"_privateUnsignedLong"]==4294967295,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     
     unsigned long long value = 1844674407370955161;//18446744073709551615
     [obj setIvar:@"_privateLongLong" withUnsignedLongLong:value];
-    LVAssertTrue([obj getIvarUnsignedLongLong:@"_privateLongLong"]==value,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue([obj getIvarUnsignedLongLong:@"_privateLongLong"]==value,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     [obj setIvar:@"_privateBool" withBool:YES];
-    LVAssertTrue([obj getIvarBool:@"_privateBool"]==YES,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue([obj getIvarBool:@"_privateBool"]==YES,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     void *pt = (__bridge void*)self;
     [obj setIvar:@"_privatePointer" withPointer:(void*)self];
-    LVAssertTrue([obj getIvarPointer:@"_privatePointer"]==pt,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue([obj getIvarPointer:@"_privatePointer"]==pt,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     NSString *name = @"name";
     [obj setIvar:@"_privateObject" withObject:name];
-    LVAssertTrue([obj getIvarObject:@"_privateObject"]==name,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue([obj getIvarObject:@"_privateObject"]==name,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     [obj setIvar:@"_privateCGFloat" withFloat:-20];
-    LVAssertTrue([obj getIvarFloat:@"_privateCGFloat"]==-20,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue([obj getIvarFloat:@"_privateCGFloat"]==-20,[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     
     
     [obj setIvar:@"_privatePoint" withCGPoint:CGPointMake(10, 10)];
-    LVAssertTrue( CGPointEqualToPoint(CGPointMake(10, 10), [obj getIvarCGPoint:@"_privatePoint"]),[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue( CGPointEqualToPoint(CGPointMake(10, 10), [obj getIvarCGPoint:@"_privatePoint"]),[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     [obj setIvar:@"_privateSize" withCGSize:CGSizeMake(20, 40)];
-    LVAssertTrue( CGSizeEqualToSize(CGSizeMake(20, 40), [obj getIvarCGSize:@"_privateSize"]),[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue( CGSizeEqualToSize(CGSizeMake(20, 40), [obj getIvarCGSize:@"_privateSize"]),[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
     [obj setIvar:@"_privateRect" withCGRect:CGRectMake(10, 10, 20, 20)];
-    LVAssertTrue( CGRectEqualToRect(CGRectMake(10, 10, 20, 20),  [obj getIvarCGRect:@"_privateRect"]),[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
+    FWAssertTrue( CGRectEqualToRect(CGRectMake(10, 10, 20, 20),  [obj getIvarCGRect:@"_privateRect"]),[NSString stringWithFormat:@"Assert Failed At Line: %d",__LINE__]);
     
 }
 

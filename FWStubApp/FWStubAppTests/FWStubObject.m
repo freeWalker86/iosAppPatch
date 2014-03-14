@@ -8,6 +8,117 @@
 
 #import "FWStubObject.h"
 
+
+@implementation FWStubBase
+- (id)init
+{
+    self = [super init];
+    if (self) {
+        _privateObj = @"_privateObj";
+    }
+    return self;
+}
+- (NSDictionary*)testStr:(NSString*)name array:(NSArray*)array dict:(NSDictionary*)dict{
+    NSLog(@">>>[FWStubBase] testStr name=[%@] array=[%@] dict=[%@]",name, array, dict);
+    return @{@"arg0": name,@"arg1":array,@"arg2":dict};
+}
+
+- (NSArray*)testBool:(BOOL)b intV:(int)i longV:(long)l floatV:(float)f doubleV:(double)d{
+    NSLog(@">>>[FWStubBase] testBool bool=[%d] int=[%d] long=[%ld] float=[%f] double=[%lf]",b,i,l,f,d);
+    return @[[NSNumber numberWithBool:b],[NSNumber numberWithInt:i],[NSNumber numberWithLong:l],[NSNumber numberWithFloat:f],[NSNumber numberWithDouble:d]];
+}
+
+- (NSArray*)testPoint:(CGPoint)point size:(CGSize)size rect:(CGRect)rect{
+    NSLog(@">>>[FWStubBase] testPoint point=[%@] size=[%@] rect=[%@]",NSStringFromCGPoint(point),NSStringFromCGSize(size),NSStringFromCGRect(rect));
+    return @[[NSValue valueWithCGPoint:point],[NSValue valueWithCGSize:size],[NSValue valueWithCGRect:rect]];
+}
+
++ (NSArray*)testClassMethod:(CGFloat)arg1 arg2:(NSString*)arg2 arg3:(NSArray*)arg3{
+    NSLog(@">>>[FWStubBase] testClassMethod arg1=[%f] arg2=[%@] arg3=[%@]",arg1, arg2, arg3);
+    return @[[NSNumber numberWithFloat:arg1],arg2,arg3];
+}
+
++ (NSArray*)testClassMethod11:(float)arg1{
+    return [NSArray arrayWithObjects:@"xxx", nil];
+}
+
++ (NSArray*)testClassMethod11:(float)arg1 arg2:(long)ar2{
+    NSLog(@">>>testClassMethod11");
+    return @[[NSNumber numberWithFloat:arg1], [NSNumber numberWithLong:ar2]];
+}
+
++ (NSArray*)testClassMethod11:(float)arg1 argTwo:(NSArray*)arg2{
+    return [NSArray arrayWithObjects:@"xxx", nil];
+}
+
+
+- (id     )getObject{
+    NSLog(@">>>[FWStubBase] %@ %@",NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    return _privateObj;
+}
+
+- (NSString*)getStr{
+    NSLog(@">>>[FWStubBase] %@ %@",NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    
+    return @"string";
+}
+- (int    )getInt{
+    NSLog(@">>>[FWStubBase] %@ %@",NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    
+    return 32765;
+}
+- (long   )getLong{
+    NSLog(@">>>[FWStubBase] %@ %@",NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    
+    return 2147483646;
+}
+- (float  )getFloat{
+    NSLog(@">>>[FWStubBase] %@ %@",NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    
+    return -2000;
+}
+- (double )getDouble{
+    NSLog(@">>>[FWStubBase] %@ %@",NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    
+    return -2001;
+}
+- (CGPoint)getPoint{
+    NSLog(@">>>[FWStubBase] %@ %@",NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    
+    return CGPointMake(10, 20);
+}
+- (CGSize )getSize{
+    NSLog(@">>>[FWStubBase] %@ %@",NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    
+    return CGSizeMake(100.08, 22.89);
+}
+- (CGRect )getRect{
+    NSLog(@">>>[FWStubBase] %@ %@",NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    
+    return CGRectMake(0.22, 43.7, 55.89, 90);
+}
+
++ (id     )getClassObject{
+    NSLog(@">>>[FWStubBase] %@ %@",NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    
+    return globalName;
+}
+
++ (float  )getClassFloat{
+    NSLog(@">>>[FWStubBase] %@ %@",NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    
+    return 234.124;
+}
+
++ (CGSize )getClassSize{
+    NSLog(@">>>[FWStubBase] %@ %@",NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+    
+    return CGSizeMake(100.08, 22.89);
+}
+
+@end
+
+
 @implementation FWStubObject
 
 #pragma mark - Life Circle
@@ -68,10 +179,11 @@
     return nil;
 }
 
-- (NSArray*)testBool:(BOOL)b int:(int)i long:(long)l float:(float)f double:(double)d{
+- (NSArray*)testBool:(BOOL)b intV:(int)i longV:(long)l floatV:(float)f doubleV:(double)d{
     NSLog(@">>>testBool bool=[%d] int=[%d] long=[%ld] float=[%f] double=[%lf]",b,i,l,f,d);
     return nil;
 }
+
 - (NSArray*)testPoint:(CGPoint)point size:(CGSize)size rect:(CGRect)rect{
     NSLog(@">>>testPoint point=[%@] size=[%@] rect=[%@]",NSStringFromCGPoint(point),NSStringFromCGSize(size),NSStringFromCGRect(rect));
     return nil;

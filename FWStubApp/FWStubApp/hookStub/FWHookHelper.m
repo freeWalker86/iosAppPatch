@@ -10,6 +10,7 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import "NSObject+FWSwizzle.h"
+#import "FWConst.h"
 
 
 id getArgWithList(va_list* args, const char *typeDes){

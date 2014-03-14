@@ -14,13 +14,6 @@ NSInvocation* generateInvocation(id self, SEL _cmd, va_list* args);
 id getOriginReturnValue(NSInvocation*invocation , int lenth, const char*type);
 
 
-
-#define kHookArray                @"hookArray"
-#define kHookClassName            @"hookClassName"
-#define kHookClassMethodName      @"hookClassMethodName"
-#define kHookClassMethod          @"hookClassMethod"
-
-
 #define FW_HOOKMETHOD_MAIN                                                  \
 NSMutableArray *mutArray = [NSMutableArray arrayWithCapacity:0];            \
 [mutArray addObject:self];                                                  \
@@ -39,7 +32,7 @@ for (int i = 2; i < argc; i++) {                                            \
     id obj = getArgWithList(&args_copy, type);                              \
     obj ? [mutArray addObject:obj] : [mutArray addObject:[NSNull null]];    \
 }                                                                           \
-                                                                            \
+/*you can also use objc_msgSend implement it*/                              \
 NSInvocation *invocation =  generateInvocation(self, _cmd, &args);          \
                                                                             \
 va_end(args_copy);                                                          \
